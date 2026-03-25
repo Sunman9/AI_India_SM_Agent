@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  category  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  distributors Distributor[]
+  outreaches   Outreach[]
+}
+
+model User {
+  id             String       @id @default(uuid())
+  email          String       @unique
+  name           String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Distributor {
+  id             String       @id @default(uuid())
+  name           String
+  company        String
+  contactEmail   String?
+  contactPhone   String?
+  linkedInUrl    String?
+  location       String?
+  category       String?
+  relevanceScore Float?       @default(0.0)
+  status         Stage        @default(IDENTIFIED)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  outreaches Outreach[]
+}
+
+model Outreach {
+  id              String       @id @default(uuid())
+  distributorId   String
+  distributor     Distributor  @relation(fields: [distributorId], references: [id])
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  emailContent    String?      @db.Text
+  linkedInContent String?      @db.Text
+  status          String       @default("PENDING") // PENDING, SENT
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+enum Stage {
+  IDENTIFIED
+  CONTACTED
+  RESPONDED
+  NEGOTIATION
+  CLOSED
+}
